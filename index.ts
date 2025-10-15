@@ -18,6 +18,13 @@ const prisma = new PrismaClient({
   }
 });
 
+// Test database connection
+prisma.$connect().then(() => {
+  console.log('✅ Database connected successfully');
+}).catch((error) => {
+  console.error('❌ Database connection failed:', error);
+});
+
 const app = express();
 const httpServer = createServer(app);
 
@@ -142,6 +149,11 @@ io.on('connection', (socket: SocketWithUser) => {
     try {
       console.log(`Message from ${data.senderId} to ${data.receiverId}: ${data.content}`);
       
+      // Check if prisma is available
+      if (!prisma) {
+        throw new Error('Prisma client is not initialized');
+      }
+      
       // Save message to database
       const newMessage = await prisma.message.create({
         data: {
@@ -168,22 +180,37 @@ io.on('connection', (socket: SocketWithUser) => {
       ) as SocketWithUser;
       const isReceiverViewingThisChat = receiverSocket?.currentChatId === data.chatId;
 
-      // Update unread count
-      const updatedUserChatSettings = await prisma.userChatSettings.update({
-        where: { 
-          user_id_chat_id: { 
-            user_id: parseInt(data.receiverId), 
-            chat_id: data.chatId 
-          } 
-        },
-        data: { 
-          unread_count: isReceiverViewingThisChat 
-            ? { set: 0 } // If viewing, set to 0
-            : { increment: 1 }, // If not viewing, increment by 1
-          is_hidden: false // Show chat when first message arrives
-        },
-        select: { unread_count: true }
+      // Update unread count using upsert (create if not exists)
+      // First try to find existing record
+      const existingSettings = await prisma.user_chat_settings.findFirst({
+        where: {
+          user_id: parseInt(data.receiverId),
+          chat_id: data.chatId
+        }
       });
+
+      if (existingSettings) {
+        // Update existing record
+        await prisma.user_chat_settings.update({
+          where: { id: existingSettings.id },
+          data: {
+            unread_count: isReceiverViewingThisChat 
+              ? 0 // If viewing, set to 0
+              : (existingSettings.unread_count || 0) + 1, // If not viewing, increment by 1
+            is_hidden: false // Show chat when first message arrives
+          }
+        });
+      } else {
+        // Create new record
+        await prisma.user_chat_settings.create({
+          data: {
+            user_id: parseInt(data.receiverId),
+            chat_id: data.chatId,
+            unread_count: isReceiverViewingThisChat ? 0 : 1,
+            is_hidden: false
+          }
+        });
+      }
 
       // Get sender info
       const sender = await prisma.user.findUnique({
@@ -220,7 +247,9 @@ io.on('connection', (socket: SocketWithUser) => {
         newUnreadCount: 0 
       });
       
-      const unreadCountForReceiver = updatedUserChatSettings.unread_count || 0;
+      // Calculate correct unread count for receiver
+      const unreadCountForReceiver = isReceiverViewingThisChat ? 0 : 1;
+      
       io.to(data.receiverId).emit('unread_update', { 
         chatId: data.chatId, 
         newUnreadCount: unreadCountForReceiver
