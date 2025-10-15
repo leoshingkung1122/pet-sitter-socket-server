@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only index.ts",
-    "build": "tsc",
-    "postinstall": "npm run build"
+    "build": "tsc"
   },
   "keywords": ["socket.io", "chat", "pet-sitter"],
   "author": "",
