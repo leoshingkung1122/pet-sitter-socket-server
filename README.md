@@ -2,28 +2,35 @@
 
 Standalone Socket.IO server for Pet Sitter App chat functionality.
 
-## Features
+## 🚀 Features
 
-- Real-time messaging
-- User online/offline status
-- Unread message count
-- Chat list updates
-- CORS support for Vercel deployment
+- ✅ Real-time messaging
+- ✅ User online/offline status
+- ✅ Unread message count
+- ✅ Chat list updates
+- ✅ CORS support for Vercel deployment
+- ✅ Automatic reconnection
+- ✅ Database integration with Prisma
+- ✅ Health check endpoints
 
-## Development
-
-### Prerequisites
+## 📋 Prerequisites
 
 - Node.js 18+
 - npm or yarn
+- PostgreSQL database
+- Railway account (for deployment)
 
-### Installation
+## 🛠️ Installation
 
 ```bash
+# Install dependencies
 npm install
+
+# Generate Prisma client
+npm run prisma:generate
 ```
 
-### Environment Variables
+## ⚙️ Environment Variables
 
 Create a `.env` file based on `env.example`:
 
@@ -33,70 +40,182 @@ cp env.example .env
 
 Required environment variables:
 
-- `PORT`: Server port (default: 4000)
-- `SOCKET_IO_CORS_ORIGIN`: Comma-separated list of allowed origins
+```bash
+# Server port (Railway sets this automatically)
+PORT=4000
 
-### Running Locally
+# CORS origins (comma-separated)
+SOCKET_IO_CORS_ORIGIN=http://localhost:3000,https://your-app.vercel.app
+
+# Database connection
+DATABASE_URL=postgresql://user:password@host:5432/database?schema=public
+```
+
+## 💻 Development
 
 ```bash
 # Development mode with hot reload
 npm run dev
 
-# Production mode
+# Production build
 npm run build
+
+# Start production server
 npm start
 ```
 
-### Testing
+### Testing Locally
 
-Visit `http://localhost:4000/health` to check if the server is running.
+1. Visit `http://localhost:4000/health` - Health check
+2. Visit `http://localhost:4000/socket-status` - Socket.IO status
 
-## Deployment
+Expected responses:
+```json
+// /health
+{
+  "status": "ok",
+  "server": "Socket.IO Standalone",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "connectedClients": 0
+}
 
-### Railway
-
-1. Connect your GitHub repository to Railway
-2. Set environment variables in Railway dashboard:
-   - `PORT`: Railway will set this automatically
-   - `SOCKET_IO_CORS_ORIGIN`: Your Vercel app URL
-3. Deploy
-
-### Environment Variables for Railway
-
+// /socket-status
+{
+  "success": true,
+  "isReady": true,
+  "message": "Socket.IO server is running",
+  "connectedClients": 0
+}
 ```
-SOCKET_IO_CORS_ORIGIN=https://your-vercel-app.vercel.app
-```
 
-## API Endpoints
+## 🚢 Deployment
 
-- `GET /health` - Health check
-- `GET /socket-status` - Socket.IO server status
+### Railway Deployment
 
-## Socket.IO Events
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
-### Client to Server
+Quick steps:
+1. Push to GitHub
+2. Connect repository to Railway
+3. Set environment variables in Railway dashboard
+4. Deploy automatically
 
-- `join_app` - Join the app with user ID
-- `send_message` - Send a message
-- `set_current_chat` - Set current chat being viewed
-- `disconnect` - User disconnects
-
-### Server to Client
-
-- `user_online` - User comes online
-- `user_offline` - User goes offline
-- `receive_message` - Receive a new message
-- `unread_update` - Update unread count
-- `online_users_list` - List of online users
-- `chat_list_update` - Chat list update
-- `error` - Error occurred
-
-## Integration with Next.js App
-
-Update your Next.js app's environment variables:
+### Required Environment Variables in Railway
 
 ```bash
-NEXT_PUBLIC_SOCKET_SERVER_URL=https://your-railway-app.railway.app
+PORT=${{PORT}}  # Auto-set by Railway
+SOCKET_IO_CORS_ORIGIN=https://your-app.vercel.app
+DATABASE_URL=postgresql://...
 ```
 
-Then update your Socket.IO client configuration to connect to this server instead of the Next.js API route.
+## 🔗 Integration with Pet-Sitter-AppTest
+
+See [SETUP_CLIENT.md](./SETUP_CLIENT.md) for client setup instructions.
+
+In your Next.js app, set:
+```bash
+NEXT_PUBLIC_SOCKET_SERVER_URL=https://your-socket-server.railway.app
+```
+
+## 📡 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Server health check |
+| `/socket-status` | GET | Socket.IO server status |
+
+## 🔌 Socket.IO Events
+
+### Client → Server
+
+| Event | Data | Description |
+|-------|------|-------------|
+| `join_app` | `userId: string` | User joins the app |
+| `send_message` | `SendMessageData` | Send a chat message |
+| `set_current_chat` | `{userId, chatId}` | Set active chat |
+| `disconnect` | - | User disconnects |
+
+### Server → Client
+
+| Event | Data | Description |
+|-------|------|-------------|
+| `user_online` | `userId: string` | User came online |
+| `user_offline` | `userId: string` | User went offline |
+| `receive_message` | `MessagePayload` | New message received |
+| `unread_update` | `{chatId, count}` | Unread count updated |
+| `online_users_list` | `string[]` | List of online users |
+| `chat_list_update` | `{chatId, action}` | Chat visibility update |
+| `error` | `{message, details}` | Error occurred |
+
+## 📁 Project Structure
+
+```
+pet-sitter-socket-server/
+├── index.ts              # Main server file
+├── prisma/
+│   └── schema.prisma     # Database schema
+├── package.json          # Dependencies
+├── tsconfig.json         # TypeScript config
+├── railway.json          # Railway deployment config
+├── nixpacks.toml         # Build config
+├── Procfile              # Start command
+├── .gitignore           # Git ignore rules
+├── env.example          # Environment template
+├── README.md            # This file
+├── DEPLOYMENT.md        # Deployment guide
+└── SETUP_CLIENT.md      # Client setup guide
+```
+
+## 🔧 Scripts
+
+```bash
+npm run dev             # Development with hot reload
+npm run build           # Build TypeScript
+npm start               # Start production server
+npm run prisma:generate # Generate Prisma client
+```
+
+## 🐛 Troubleshooting
+
+### Build Issues
+- Ensure `DATABASE_URL` is set
+- Run `npm run prisma:generate`
+- Check Prisma schema syntax
+
+### Connection Issues
+- Verify CORS settings
+- Check client `NEXT_PUBLIC_SOCKET_SERVER_URL`
+- Review Railway logs
+
+### Database Issues
+- Confirm DATABASE_URL is accessible
+- Verify Prisma schema matches database
+- Check database connection
+
+## 📊 Monitoring
+
+Railway provides:
+- Real-time logs
+- Performance metrics
+- Deployment history
+- Automatic health checks
+
+## 🔒 Security Notes
+
+1. Always use environment variables for sensitive data
+2. Keep `DATABASE_URL` secure
+3. Limit CORS origins to trusted domains
+4. Use HTTPS in production
+5. Monitor for suspicious connection patterns
+
+## 📝 License
+
+ISC
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request

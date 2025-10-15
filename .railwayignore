@@ -1,0 +1,4 @@
+# Ignore Docker files to force NIXPACKS usage
+Dockerfile
+docker-compose.yml
+.dockerignore

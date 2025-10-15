@@ -1,2 +1,19 @@
-# Ignore everything to prevent Docker build
-*
+# Ignore Docker files to prevent Docker build
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Ignore development files
+node_modules
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore build artifacts
+dist
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
