@@ -111,13 +111,13 @@ io.on('connection', (socket: SocketWithUser) => {
       socket.join(userId); // Join a room specific to the user
       
       // Update user online status in database
-      await prisma.User.update({ 
+      await prisma.user.update({ 
         where: { id: parseInt(userId) }, 
         data: { is_online: true } 
       });
       
       // Get online users from database
-      const onlineUsers = await prisma.User.findMany({
+      const onlineUsers = await prisma.user.findMany({
         where: { is_online: true },
         select: { id: true },
       });
@@ -143,7 +143,7 @@ io.on('connection', (socket: SocketWithUser) => {
       console.log(`Message from ${data.senderId} to ${data.receiverId}: ${data.content}`);
       
       // Save message to database
-      const newMessage = await prisma.Message.create({
+      const newMessage = await prisma.message.create({
         data: {
           chat_id: data.chatId,
           sender_id: parseInt(data.senderId),
@@ -154,7 +154,7 @@ io.on('connection', (socket: SocketWithUser) => {
       });
 
       // Update chat last message
-      await prisma.Chat.update({ 
+      await prisma.chat.update({ 
         where: { id: data.chatId }, 
         data: { 
           last_message_id: newMessage.id, 
@@ -169,7 +169,7 @@ io.on('connection', (socket: SocketWithUser) => {
       const isReceiverViewingThisChat = receiverSocket?.currentChatId === data.chatId;
 
       // Update unread count
-      const updatedUserChatSettings = await prisma.UserChatSettings.update({
+      const updatedUserChatSettings = await prisma.userChatSettings.update({
         where: { 
           user_id_chat_id: { 
             user_id: parseInt(data.receiverId), 
@@ -254,7 +254,7 @@ io.on('connection', (socket: SocketWithUser) => {
         console.log(`User ${socket.userId} disconnected from socket ${socket.id}`);
         
         // Update user offline status in database
-        await prisma.User.update({ 
+        await prisma.user.update({ 
           where: { id: parseInt(socket.userId) }, 
           data: { 
             is_online: false, 
