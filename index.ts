@@ -28,9 +28,16 @@ prisma.$connect().then(() => {
 const app = express();
 const httpServer = createServer(app);
 
+const corsOriginsString = process.env.SOCKET_IO_CORS_ORIGIN || 'http://localhost:3000';
+
+const cleanOrigins = corsOriginsString
+    .split(',') // แยกด้วยเครื่องหมาย comma
+    .map(url => url.trim()) // **สำคัญมาก: ลบช่องว่างที่อยู่หน้า/หลัง URL**
+    .filter(url => url.startsWith('http'));
+
 // Enable CORS for all routes
 app.use(cors({
-  origin: process.env.SOCKET_IO_CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+  origin: cleanOrigins,
   credentials: true
 }));
 
@@ -77,7 +84,7 @@ interface ChatListUpdateData {
 // Initialize Socket.IO server
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.SOCKET_IO_CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+    origin: cleanOrigins,
     methods: ['GET', 'POST', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
