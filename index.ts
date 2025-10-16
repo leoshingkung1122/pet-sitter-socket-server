@@ -37,7 +37,7 @@ const cleanOrigins = corsOriginsString
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: cleanOrigins,
+  origin: '*',
   credentials: true
 }));
 
@@ -84,7 +84,7 @@ interface ChatListUpdateData {
 // Initialize Socket.IO server
 const io = new Server(httpServer, {
   cors: {
-    origin: cleanOrigins,
+    origin: '*',
     methods: ['GET', 'POST', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
